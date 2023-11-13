@@ -1,57 +1,169 @@
 import networkx as nx
 import random
-from datetime import datetime
+import time
 import matplotlib.pyplot as plt
 
 
 def greedy_max_cut(graph, num_iterations):
     best_cut_size = 0
     best_partition = None
+    operations_counter = 0
 
     for _ in range(num_iterations):
-        partition = random_partition(graph)
-        cut_size = calculate_cut_size(graph, partition)
+        partition, oper_1 = random_partition(graph)
+        cut_size, oper_2 = calculate_cut_size(graph, partition)
+        operations_counter += (oper_1 + oper_2)
 
         if cut_size > best_cut_size:
+            operations_counter += 1
             best_cut_size = cut_size
             best_partition = partition
 
-    return best_partition, best_cut_size
+    return best_partition, best_cut_size, num_iterations*operations_counter
 
 
 def random_partition(graph):
+    number_operations = 0
     partition = {}
     for node in graph.nodes():
-        partition[node] = random.choice(["A", "B"])
-    return partition
+        number_operations += 1
+        partition[node] = random.choice(["S", "T"])
+    return partition, number_operations
 
 
 def calculate_cut_size(graph, partition):
     cut_size = 0
+    number_operations = 0
+
     for edge in graph.edges():
+        number_operations += 1
         if partition[edge[0]] != partition[edge[1]]:
+            number_operations += 1
             cut_size += 1
-    return cut_size
+    return cut_size, number_operations
 
 
 def exhaustive_max_cut(graph):
     best_cut_size = 0
     best_partition = None
+    loop_counter = 0
+    operations_counter = 0
 
     for i in range(2 ** len(graph.nodes())):
+        loop_counter += 1
         partition = {}
         bin_i = bin(i)[2:].zfill(len(graph.nodes()))
 
         for j, node in enumerate(graph.nodes()):
-            partition[node] = "A" if bin_i[j] == "0" else "B"
+            partition[node] = "S" if bin_i[j] == "0" else "T"
 
-        cut_size = calculate_cut_size(graph, partition)
+        cut_size, oper = calculate_cut_size(graph, partition)
+
+        operations_counter += oper
 
         if cut_size > best_cut_size:
+            operations_counter += 1
             best_cut_size = cut_size
             best_partition = partition
 
-    return best_partition, best_cut_size
+    return best_partition, best_cut_size, loop_counter*operations_counter
+
+
+def temporal_analysis():
+    number_vertex = [vertex for vertex in range(4, 28)]
+    times_exhaustive = []
+    times_greedy = []
+    operations_exhaustive = []
+    operations_greedy = []
+
+    for i in number_vertex:
+        graph = nx.fast_gnp_random_graph(i,0.3,seed = 118377, directed = False)
+
+        with open("results.txt", "a") as file:
+            file.write("Graph: {}\n\n".format(graph.edges))
+
+        start_time = time.perf_counter()
+        best_partition, best_cut_size, oper = exhaustive_max_cut(graph)
+        end_time = time.perf_counter()
+        times_exhaustive.append((end_time - start_time))
+        operations_exhaustive.append(oper)
+        list_S = []
+        list_T = []
+
+        for key, value in best_partition.items():
+            if value == "S":
+                list_S.append(key)
+            elif value == "T":
+                list_T.append(key)
+        print("\nExhaustive:")
+        print("Best Cut Size:", best_cut_size)
+        print("Best Partition:")
+        print("\tSet S: ", list_S)
+        print("\tSet T: ", list_T)
+        print("Graph size (vertex): ", i)
+        print("Duration: ", (end_time - start_time))
+        print("Operations: ", oper)
+        # write results to file
+        with open("results.txt", "a") as file:
+            file.write("Exhaustive:\n")
+            file.write("Best Cut Size: {}\n".format(best_cut_size))
+            file.write("Best Partition:\n")
+            file.write("\tSet S: {}\n".format(list_S))
+            file.write("\tSet T: {}\n".format(list_T))
+            file.write("Graph size (vertex): {}\n\n".format(i))
+            file.write("Duration: {}\n\n".format(end_time - start_time))
+            file.write("Operations: {}\n\n".format(oper))
+
+        start_time = time.perf_counter()
+        best_partition, best_cut_size, oper = greedy_max_cut(graph, 1000)
+        end_time = time.perf_counter()
+        times_greedy.append((end_time - start_time))
+        operations_greedy.append(oper)
+        list_S = []
+        list_T = []
+
+        for key, value in best_partition.items():
+            if value == "S":
+                list_S.append(key)
+            elif value == "T":
+                list_T.append(key)
+        print("\nGreedy:")
+        print("Best Cut Size:", best_cut_size)
+        print("Best Partition:")
+        print("\tSet S: ", list_S)
+        print("\tSet T: ", list_T)
+        print("Graph size (vertex): ", i)
+        print("Duration: ", (end_time - start_time))
+        print("Operations: ", oper)
+        # write results to file
+        with open("results.txt", "a") as file:
+            file.write("Greedy:\n")
+            file.write("Best Cut Size: {}\n".format(best_cut_size))
+            file.write("Best Partition:\n")
+            file.write("\tSet S: {}\n".format(list_S))
+            file.write("\tSet T: {}\n".format(list_T))
+            file.write("Graph size (vertex): {}\n\n".format(i))
+            file.write("Duration: {}\n".format(end_time - start_time))
+            file.write("Operations: {}\n".format(oper))
+            file.write("\n\n=====================================================\n\n")
+
+        print("\n\n=====================================================\n\n")
+
+    plt.plot(number_vertex, operations_exhaustive, label='Exhaustive')
+    plt.plot(number_vertex, operations_greedy, label='Greedy')
+    plt.xlabel('Graph Size')
+    plt.ylabel('Number of Operations')
+    plt.title('Performance of Algorithms (Operations)')
+    plt.legend()
+    plt.show()
+
+    plt.plot(number_vertex, times_exhaustive, label='Exhaustive')
+    plt.plot(number_vertex, times_greedy, label='Greedy')
+    plt.xlabel('Graph Size')
+    plt.ylabel('Execution Time (seconds)')
+    plt.title('Performance of Algorithms (Time)')
+    plt.legend()
+    plt.show()
 
 
 # graph = [(0, 1), (0, 2), (1, 3), (1, 4), (2, 3), (3, 4)]
@@ -89,10 +201,10 @@ graph = [
     (18, 13),
 ]
 
+temporal_analysis()
 
-num_iterations = 1000
 
-random_generate = input("Generate a random graph? (y/n)")
+""" random_generate = input("Generate a random graph? (y/n)")
 
 if random_generate == "y":
     num_vertex = input("How many vertex do you want to use? (up to 100)")
@@ -220,3 +332,4 @@ else:
 
     nx.draw(G)
     plt.show()
+ """
