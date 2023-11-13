@@ -69,7 +69,7 @@ def exhaustive_max_cut(graph):
     return best_partition, best_cut_size, loop_counter*operations_counter
 
 
-def temporal_analysis():
+def temporal_analysis_vertex():
     number_vertex = [vertex for vertex in range(4, 28)]
     times_exhaustive = []
     times_greedy = []
@@ -165,6 +165,105 @@ def temporal_analysis():
     plt.legend()
     plt.show()
 
+def temporal_analysis_edges():
+    edge_probability = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    times_exhaustive = []
+    times_greedy = []
+    operations_exhaustive = []
+    operations_greedy = []
+
+    for i in edge_probability:
+        graph = nx.fast_gnp_random_graph(18,i,seed = 118377, directed = False)
+
+        with open("results.txt", "a") as file:
+            file.write("Graph: {}\n\n".format(graph.edges))
+
+        start_time = time.perf_counter()
+        best_partition, best_cut_size, oper = exhaustive_max_cut(graph)
+        end_time = time.perf_counter()
+        times_exhaustive.append((end_time - start_time))
+        operations_exhaustive.append(oper)
+        list_S = []
+        list_T = []
+
+        for key, value in best_partition.items():
+            if value == "S":
+                list_S.append(key)
+            elif value == "T":
+                list_T.append(key)
+        print("\nExhaustive:")
+        print("Best Cut Size:", best_cut_size)
+        print("Best Partition:")
+        print("\tSet S: ", list_S)
+        print("\tSet T: ", list_T)
+        print("Edge probability: ", i)
+        print("Graph size (edge): ", graph.number_of_edges())
+        print("Duration: ", (end_time - start_time))
+        print("Operations: ", oper)
+        # write results to file
+        with open("results.txt", "a") as file:
+            file.write("Exhaustive:\n")
+            file.write("Best Cut Size: {}\n".format(best_cut_size))
+            file.write("Best Partition:\n")
+            file.write("\tSet S: {}\n".format(list_S))
+            file.write("\tSet T: {}\n".format(list_T))
+            file.write("Edge probability: {}\n\n".format(i))
+            file.write("Graph size (edge): {}\n\n".format(graph.number_of_edges()))
+            file.write("Duration: {}\n\n".format(end_time - start_time))
+            file.write("Operations: {}\n\n".format(oper))
+
+        start_time = time.perf_counter()
+        best_partition, best_cut_size, oper = greedy_max_cut(graph, 1000)
+        end_time = time.perf_counter()
+        times_greedy.append((end_time - start_time))
+        operations_greedy.append(oper)
+        list_S = []
+        list_T = []
+
+        for key, value in best_partition.items():
+            if value == "S":
+                list_S.append(key)
+            elif value == "T":
+                list_T.append(key)
+        print("\nGreedy:")
+        print("Best Cut Size:", best_cut_size)
+        print("Best Partition:")
+        print("\tSet S: ", list_S)
+        print("\tSet T: ", list_T)
+        print("Edge probability: ", i)
+        print("Graph size (edge): ", graph.number_of_edges())
+        print("Duration: ", (end_time - start_time))
+        print("Operations: ", oper)
+        # write results to file
+        with open("results.txt", "a") as file:
+            file.write("Greedy:\n")
+            file.write("Best Cut Size: {}\n".format(best_cut_size))
+            file.write("Best Partition:\n")
+            file.write("\tSet S: {}\n".format(list_S))
+            file.write("\tSet T: {}\n".format(list_T))
+            file.write("Edge probability: {}\n\n".format(i))
+            file.write("Graph size (edge): {}\n\n".format(graph.number_of_edges()))
+            file.write("Duration: {}\n".format(end_time - start_time))
+            file.write("Operations: {}\n".format(oper))
+            file.write("\n\n=====================================================\n\n")
+
+        print("\n\n=====================================================\n\n")
+
+    plt.plot(edge_probability, operations_exhaustive, label='Exhaustive')
+    plt.plot(edge_probability, operations_greedy, label='Greedy')
+    plt.xlabel('Graph Size')
+    plt.ylabel('Number of Operations')
+    plt.title('Performance of Algorithms (Operations)')
+    plt.legend()
+    plt.show()
+
+    plt.plot(edge_probability, times_exhaustive, label='Exhaustive')
+    plt.plot(edge_probability, times_greedy, label='Greedy')
+    plt.xlabel('Graph Size')
+    plt.ylabel('Execution Time (seconds)')
+    plt.title('Performance of Algorithms (Time)')
+    plt.legend()
+    plt.show()
 
 # graph = [(0, 1), (0, 2), (1, 3), (1, 4), (2, 3), (3, 4)]
 # graph = [(0, 1), (0, 2), (1, 3), (1, 4), (2, 3), (3, 4)]
@@ -201,7 +300,7 @@ graph = [
     (18, 13),
 ]
 
-temporal_analysis()
+temporal_analysis_edges()
 
 
 """ random_generate = input("Generate a random graph? (y/n)")
