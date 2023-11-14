@@ -1,3 +1,7 @@
+# Done by Rafael Gil
+# Nº Mec. 118377
+# November 2023
+
 import networkx as nx
 import random
 import time
